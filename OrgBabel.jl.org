@@ -1,0 +1,63 @@
+#+title: OrgBabel.jl
+
+* Re-establish context
+:LOGBOOK:
+CLOCK: [2022-10-11 Tue 14:53]--[2022-10-11 Tue 15:18] =>  0:25
+:END:
+** [[file:~/.emacs.d/.local/straight/repos/ESS/lisp/ess-julia.el::defun run-ess-julia (&optional start-args][Recreate this]] to detach from ESS
+* Compare with other org-babel uses
+:LOGBOOK:
+CLOCK: [2022-10-11 Tue 16:05]--[2022-10-11 Tue 16:30] =>  0:25
+CLOCK: [2022-10-11 Tue 15:25]--[2022-10-11 Tue 15:48] =>  0:23
+:END:
+** No session
+#+begin_src python
+return 4
+#+end_src
+
+#+RESULTS:
+: 4
+** Session
+#+begin_src python :session
+x = 2
+#+end_src
+
+#+RESULTS:
+
+#+begin_src python :session :results output
+print("hello")
+print(x)
+#+end_src
+
+#+RESULTS:
+: hello
+: 2
+
+** Exceptions
+Pops up with a popup bottom drawer
+
+#+begin_src python
+raise Exception("Something went wrong")
+#+end_src
+
+#+RESULTS:
+
+** Dataframes
+#+begin_src python :results
+import pandas as pd
+
+df = pd.read_csv("test/resources/example.csv")
+
+return df
+#+end_src
+
+#+RESULTS:
+| Username  Identifier FirstName LastName |
+
+** Existing Julia
+#+begin_src julia :session
+return "hello"
+#+end_src
+
+#+RESULTS:
+* Detach ESS from being required
