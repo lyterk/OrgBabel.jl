@@ -11,6 +11,8 @@ end
 
 struct NameIsNotCallable <: Exception end
 
+# TODO(lyterk): Use this to access memoized values, instead of re-evaluating
+# every block in the file.
 struct CallMap
     callables::Dict{String,Function}
     results::Dict{String,Any}
@@ -50,7 +52,7 @@ callmap = CallMap()
 
 function write_result(stream::IO, result::Any)
     try
-        if typeof(result) <: DataFrame
+        if typeof(result) <: DataFrames.DataFrame
             CSV.write(stream,
                 result,
                 missingstring="",
@@ -76,7 +78,8 @@ end
 function isolation_wrapper(name::String, user_input::String)
     # This is a super ugly way of handling this, but there really isn't a way to
     # parse then execute a macro of untrusted string without elevating that code
-    # to :toplevel
+    # to :toplevel (which would lose the intended effect of not persisting
+    # varibles when not in a session)
     return """
     function $name()
         $user_input
@@ -86,17 +89,20 @@ function isolation_wrapper(name::String, user_input::String)
     """
 end
 
-function execute_julia(name::String, input_file::String, output::IO, is_in_session::Bool)
+# TODO: Make a wrapper to make this callable from elisp.
+function internal_execute_julia(input_file::String, output::IO, is_in_session::Bool)
     result = try
         # The file contains the code from each discrete block.
         if is_in_session
             result = include(input_file)
         else
+            name = hash(input_file)
             # Contain in a lambda to restrict the variable scope.
             evalable = open(input_file, "r") do f
                 user_string = read(f, String)
                 eval_string = isolation_wrapper(name, user_string)
-                Meta.parseall(eval_string)
+                # TODO(lyterk): Use parseall to intercept invalid code?
+                # Meta.parseall(eval_string)
             end
 
             lambda = () -> eval(evalable)

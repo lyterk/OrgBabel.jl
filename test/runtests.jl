@@ -46,30 +46,30 @@ using CSV, DataFrames, Tables
 
         @testset "Not in session" begin
             @testset "Simple operation" begin
-                result = sut.execute_julia("addition", string(dir, "addition.jl"), io, false)
+                result = sut.internal_execute_julia("addition", string(dir, "addition.jl"), io, false)
                 @test result == 2
             end
 
             @testset "Define and attempt to reference variable" begin
-                definition = sut.execute_julia("definition", string(dir, "defineVariable.jl"), io, false)
+                definition = sut.internal_execute_julia("definition", string(dir, "defineVariable.jl"), io, false)
                 @test definition == "hello there"
 
-                reference = sut.execute_julia("reference", string(dir, "referenceVariable.jl"), io, false)
+                reference = sut.internal_execute_julia("reference", string(dir, "referenceVariable.jl"), io, false)
                 @test reference == "Source block evaluation failed: OrgBabel.NameIsNotCallable"
             end
         end
 
         @testset "In session" begin
             @testset "Simple operation" begin
-                result = sut.execute_julia("addition", string(dir, "addition.jl"), io, true)
+                result = sut.internal_execute_julia("addition", string(dir, "addition.jl"), io, true)
                 @test result == 2
             end
 
             @testset "Define and attempt to reference variable" begin
-                definition = sut.execute_julia("definition", string(dir, "defineVariable.jl"), io, true)
+                definition = sut.internal_execute_julia("definition", string(dir, "defineVariable.jl"), io, true)
                 @test definition == "hello there"
 
-                reference = sut.execute_julia("reference", string(dir, "referenceVariable.jl"), io, true)
+                reference = sut.internal_execute_julia("reference", string(dir, "referenceVariable.jl"), io, true)
                 @test reference == "hello there"
             end
         end
