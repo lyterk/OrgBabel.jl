@@ -52,16 +52,22 @@ callmap = CallMap()
 
 function write_result(stream::IO, result::Any)
     try
+        # Allow OB to type the result file and not just cram everything into a CSV
+        println(stream, typeof(result))
         if typeof(result) <: DataFrames.DataFrame
             CSV.write(stream,
                 result,
+                append=true,
+                header=true,
                 missingstring="",
                 quotestrings=false)
         elseif typeof(result) <: Matrix
-            CSV.write(stream, Tables.table(result))
+            CSV.write(stream, append=true, header=true, Tables.table(result))
         elseif typeof(result) <: Tables.MatrixTable
             # Conversion to Tables.MatrixTable has already happened.
-            CSV.write(stream, Tables.table(result))
+            CSV.write(stream, append=true,
+                header=true,
+                Tables.table(result))
         else
             write_message(stream, string(result))
         end
@@ -89,20 +95,20 @@ function isolation_wrapper(name::String, user_input::String)
     """
 end
 
-# TODO: Make a wrapper to make this callable from elisp.
 function internal_execute_julia(input_file::String, output::IO, is_in_session::Bool)
+    "Separate interal function to make testing more modular: hand it an IOBuffer for `output`"
     result = try
         # The file contains the code from each discrete block.
         if is_in_session
             result = include(input_file)
         else
-            name = hash(input_file)
+            name = string("execute_", hash(input_file))
             # Contain in a lambda to restrict the variable scope.
             evalable = open(input_file, "r") do f
                 user_string = read(f, String)
                 eval_string = isolation_wrapper(name, user_string)
                 # TODO(lyterk): Use parseall to intercept invalid code?
-                # Meta.parseall(eval_string)
+                Meta.parseall(eval_string)
             end
 
             lambda = () -> eval(evalable)
@@ -118,5 +124,11 @@ function internal_execute_julia(input_file::String, output::IO, is_in_session::B
     end
 
     write_result(output, result)
+end
+
+function execute_julia(input_file::String, output_file::String, is_in_session::Bool)
+    open(output_file, "w") do output_file_io
+        internal_execute_julia(input_file, output_file_io, is_in_session)
+    end
 end
 end

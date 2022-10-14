@@ -14,10 +14,10 @@ using CSV, DataFrames, Tables
     @testset "Writing results to files" begin
         @testset "Write basic result" begin
             sut.write_result(io, 5)
-            @test flush_reset(io) == "5"
+            @test flush_reset(io) == "Int64\n5"
 
             sut.write_result(io, "hello there")
-            @test flush_reset(io) == "hello there"
+            @test flush_reset(io) == "String\nhello there"
         end
 
         @testset "Write matrix" begin
@@ -27,7 +27,7 @@ using CSV, DataFrames, Tables
                 7 8 9
             ]
             sut.write_result(io, A)
-            expected = "Column1,Column2,Column3\n1,2,3\n4,5,6\n7,8,9\n"
+            expected = "Matrix{Int64}\nColumn1,Column2,Column3\n1,2,3\n4,5,6\n7,8,9\n"
             @test flush_reset(io) == expected
         end
 
@@ -35,44 +35,58 @@ using CSV, DataFrames, Tables
             df = CSV.read("resources/example.csv", DataFrame)
             sut.write_result(io, df)
             open("resources/example.csv", "r") do f
-                expected = read(f, String)
+                expected = "DataFrame\n" * read(f, String)
                 @test flush_reset(io) == expected
             end
         end
     end
 
-    @testset "Executing Julia files" begin
+    @testset "Executing Julia files internal" begin
         dir = "resources/input_files/"
 
         @testset "Not in session" begin
             @testset "Simple operation" begin
-                result = sut.internal_execute_julia("addition", string(dir, "addition.jl"), io, false)
+                result = sut.internal_execute_julia(string(dir, "addition.jl"), io, false)
                 @test result == 2
             end
 
             @testset "Define and attempt to reference variable" begin
-                definition = sut.internal_execute_julia("definition", string(dir, "defineVariable.jl"), io, false)
+                definition = sut.internal_execute_julia(string(dir, "defineVariable.jl"), io, false)
                 @test definition == "hello there"
 
-                reference = sut.internal_execute_julia("reference", string(dir, "referenceVariable.jl"), io, false)
+                reference = sut.internal_execute_julia(string(dir, "referenceVariable.jl"), io, false)
                 @test reference == "Source block evaluation failed: OrgBabel.NameIsNotCallable"
             end
         end
 
         @testset "In session" begin
             @testset "Simple operation" begin
-                result = sut.internal_execute_julia("addition", string(dir, "addition.jl"), io, true)
+                result = sut.internal_execute_julia(string(dir, "addition.jl"), io, true)
                 @test result == 2
             end
 
             @testset "Define and attempt to reference variable" begin
-                definition = sut.internal_execute_julia("definition", string(dir, "defineVariable.jl"), io, true)
+                definition = sut.internal_execute_julia(string(dir, "defineVariable.jl"), io, true)
                 @test definition == "hello there"
 
-                reference = sut.internal_execute_julia("reference", string(dir, "referenceVariable.jl"), io, true)
+                reference = sut.internal_execute_julia(string(dir, "referenceVariable.jl"), io, true)
                 @test reference == "hello there"
             end
         end
+    end
+    @testset "Executing Julia files external" begin
+        dir = "resources/input_files/"
 
+        @testset "Simple" begin
+            filename = "resources/output_files/sample.txt"
+            open(filename, "w") do output_io
+                result = sut.execute_julia(string(dir, "addition.jl"), filename, false)
+                @test result == 2
+            end
+            open(filename, "r") do output_io
+                result = read(output_io, String)
+                @test result == "Int64\n2"
+            end
+        end
     end
 end

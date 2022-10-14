@@ -5,6 +5,11 @@
 CLOCK: [2022-10-11 Tue 14:53]--[2022-10-11 Tue 15:18] =>  0:25
 :END:
 ** [[file:~/.emacs.d/.local/straight/repos/ESS/lisp/ess-julia.el::defun run-ess-julia (&optional start-args][Recreate this]] to detach from ESS
+* Rewrite ob-julia to work with my Julia library
+:LOGBOOK:
+CLOCK: [2022-10-13 Thu 11:30]--[2022-10-13 Thu 12:03] =>  0:33
+CLOCK: [2022-10-12 Wed 14:15]--[2022-10-12 Wed 14:40] =>  0:25
+:END:
 * Compare with other org-babel uses
 :LOGBOOK:
 CLOCK: [2022-10-11 Tue 16:05]--[2022-10-11 Tue 16:30] =>  0:25
